@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Movie Recs</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Movie<span>Suggest</span></h1>
+        <p>Enter a movie you love and your User ID to get AI-powered picks.</p>
+        
+        <div class="input-group">
+            <select id="movieSelect">
+                <option value="" disabled selected>Select a movie...</option>
+                <option value="0">The Dark Knight</option>
+                <option value="1">Interstellar</option>
+                <option value="2">Inception</option>
+                <option value="3">Toy Story</option>
+                <option value="4">Finding Nemo</option>
+            </select>
+            <input type="number" id="userId" placeholder="User ID (0-3)" min="0" max="3">
+            <button onclick="getRecommendations()">Get Recommendations</button>
+        </div>
+
+        <div id="results" class="results-container">
+            </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+<style>
+body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2rem;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    width: 400px;
+}
+
+h1 span { color: #e94560; }
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+select, input, button {
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+}
+
+button {
+    background: #e94560;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover { background: #ff4d6d; }
+
+.rec-card {
+    background: #0f3460;
+    margin-top: 15px;
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 5px solid #e94560;
+    text-align: left;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+<script>
+// Dataset
+const movies = [
+    { id: 0, title: 'The Dark Knight', genres: ['Action', 'Crime'] },
+    { id: 1, title: 'Interstellar', genres: ['Sci-Fi', 'Adventure'] },
+    { id: 2, title: 'Inception', genres: ['Action', 'Sci-Fi'] },
+    { id: 3, title: 'Toy Story', genres: ['Animation', 'Children'] },
+    { id: 4, title: 'Finding Nemo', genres: ['Animation', 'Children'] }
+];
+
+// Mock User Preferences (User ID -> Preferred Genres)
+const userProfiles = {
+    0: ['Action', 'Crime'],
+    1: ['Sci-Fi'],
+    2: ['Animation'],
+    3: ['Action']
+};
+
+function getRecommendations() {
+    const movieIdx = document.getElementById('movieSelect').value;
+    const userId = document.getElementById('userId').value || 0;
+    const resultsDiv = document.getElementById('results');
+    
+    if (movieIdx === "") return alert("Please select a movie!");
+
+    resultsDiv.innerHTML = "<p>Analyzing your taste...</p>";
+
+    const selectedMovie = movies[movieIdx];
+    
+    // Calculate Scores
+    let recommendations = movies
+        .filter(m => m.id != selectedMovie.id) // Don't recommend the same movie
+        .map(movie => {
+            // 1. Genre Similarity (Content-Based)
+            let intersection = movie.genres.filter(g => selectedMovie.genres.includes(g));
+            let contentScore = intersection.length / 2; 
+
+            // 2. Personalization (Collaborative Simulation)
+            let userPref = userProfiles[userId] || [];
+            let personalScore = movie.genres.filter(g => userPref.includes(g)).length * 0.5;
+
+            return { ...movie, score: contentScore + personalScore };
+        })
+        .sort((a, b) => b.score - a.score); // Highest score first
+
+    // Display Results
+    setTimeout(() => {
+        resultsDiv.innerHTML = "<h3>Top Picks for You:</h3>";
+        recommendations.slice(0, 2).forEach(rec => {
+            const stars = "⭐".repeat(Math.ceil(rec.score * 2) + 1);
+            resultsDiv.innerHTML += `
+                <div class="rec-card">
+                    <strong>${rec.title}</strong><br>
+                    <small>${rec.genres.join(', ')}</small><br>
+                    <span>Match: ${stars}</span>
+                </div>
+            `;
+        });
+    }, 600);
+}
+</script>
